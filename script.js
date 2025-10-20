@@ -282,7 +282,10 @@ function handleAnswer(e) {
   if (parseInt(selected) === q.correct) {
     score++;
     feedback.innerHTML = `<span class="correct">Correct! 🎉</span><br>${q.fact}`;
+    // Show confetti for bonus question correct
+    if (q.bonus) showConfetti();
   } else {
+    score = Math.max(0, score - 1);
     feedback.innerHTML = `<span class="incorrect">Not quite! The correct answer is: <b>${q.answers[q.correct]}</b>.</span><br>${q.fact}`;
   }
   form.querySelectorAll('input').forEach(inp => inp.disabled = true);
@@ -296,7 +299,72 @@ function handleAnswer(e) {
   }, 2200);
 }
 
+function showConfetti() {
+  // Remove any existing confetti
+  document.querySelectorAll('.confetti-canvas').forEach(el => el.remove());
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'confetti-canvas';
+  canvas.style.position = 'fixed';
+  canvas.style.top = 0;
+  canvas.style.left = 0;
+  canvas.style.width = '100vw';
+  canvas.style.height = '100vh';
+  canvas.style.pointerEvents = 'none';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+  const confettiCount = 80;
+  const confetti = [];
+  const colors = ['#FFD200', '#0099CC', '#4fd2ff', '#fff', '#333'];
+
+  for (let i = 0; i < confettiCount; i++) {
+    confetti.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * -canvas.height,
+      r: Math.random() * 8 + 4,
+      d: Math.random() * confettiCount,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      tilt: Math.random() * 10 - 5,
+      tiltAngle: 0,
+      tiltAngleIncrement: Math.random() * 0.07 + 0.05
+    });
+  }
+
+  let frame = 0;
+  function drawConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confetti.forEach(c => {
+      ctx.beginPath();
+      ctx.ellipse(c.x, c.y, c.r, c.r / 2, c.tilt, 0, 2 * Math.PI);
+      ctx.fillStyle = c.color;
+      ctx.fill();
+    });
+    updateConfetti();
+    frame++;
+    if (frame < 120) {
+      requestAnimationFrame(drawConfetti);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  function updateConfetti() {
+    confetti.forEach(c => {
+      c.y += 3 + Math.random() * 2;
+      c.x += Math.sin(frame / 10 + c.d) * 2;
+      c.tiltAngle += c.tiltAngleIncrement;
+      c.tilt = Math.sin(c.tiltAngle) * 8;
+    });
+  }
+
+  drawConfetti();
+}
+
 function showGameComplete() {
+  showConfetti();
   gameContainer.innerHTML = `
     <div class="fade-in">
       <h2>Game Complete!</h2>
